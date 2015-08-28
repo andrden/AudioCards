@@ -1,0 +1,9 @@
+#JSGF V1.0;
+
+grammar menu;
+
+public <item> =
+    dog | cat | lion | egg | leg | sun | gun | two | log | table | apple |
+
+    hog | frog | mat | via | tag | rag | sack | maple | cable | fog | zoo | god | stun | peg | heck
+    ;

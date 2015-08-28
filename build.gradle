@@ -1,0 +1,35 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'c.Main'
+
+run {
+    /* Need to split the space-delimited value in the exec.args */
+    // gradle run -Dexec.args="arg1 arg2 arg3"
+    args System.getProperty("exec.args")==null ? [] : System.getProperty("exec.args").split()
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
+}
+
+
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+
+dependencies {
+    //compile "joda-time:joda-time:2.2"
+    compile "org.apache.commons:commons-lang3:3.4"
+    compile "edu.cmu.sphinx:sphinx4-core:1.0-SNAPSHOT"
+    compile "edu.cmu.sphinx:sphinx4-data:1.0-SNAPSHOT"
+}
+
+jar {
+    baseName = 'AudioCards'
+    version =  '0.1.0'
+}
