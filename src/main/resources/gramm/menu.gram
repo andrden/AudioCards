@@ -3,7 +3,9 @@
 grammar menu;
 
 public <item> =
-    dog | cat | lion | egg | leg | sun | gun | two | log | table | apple |
+    ball | cat | cup | dinosaur | dog | fly | frog | lion | moon | pig |
 
-    hog | frog | mat | via | tag | rag | sack | maple | cable | fog | zoo | god | stun | peg | heck
+
+    egg | leg | sun | gun | two | log | table | apple |
+    hog | mat | via | tag | rag | sack | maple | cable | fog | zoo | god | stun | peg | heck
     ;

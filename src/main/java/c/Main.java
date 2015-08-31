@@ -5,94 +5,148 @@ import edu.cmu.sphinx.api.LiveSpeechRecognizer;
 import edu.cmu.sphinx.api.SpeechResult;
 import edu.cmu.sphinx.api.StreamSpeechRecognizer;
 import edu.cmu.sphinx.result.WordResult;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.event.EventHandler;
+import javafx.scene.Group;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
+import javafx.stage.Stage;
 
-import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.lang.System.currentTimeMillis;
 
 /**
  * Created by denny on 8/6/15.
  */
-public class Main {
-    private static final String ACOUSTIC_MODEL =
-            "resource:/edu/cmu/sphinx/models/en-us/en-us";
-    private static final String DICTIONARY_PATH =
-            "resource:/edu/cmu/sphinx/models/en-us/cmudict-en-us.dict";
-    private static final String GRAMMAR_PATH =
-            "resource:/gramm/";
+public class Main extends Application {
+    static final int IMG_W = 800;
+    static final int IMG_H = 600;
+
+    int imgPos=0;
+    File[] images;
+    BorderPane root;
+
+    ImageView fileImg(File file) throws IOException{
+        ImageView iv2 = new ImageView();
+        if( file.getName().endsWith(".gif") ){
+            Animation ani = new AnimatedGif(file.getPath(), 2000);
+            ani.setCycleCount(999);
+            ani.play();
+            iv2 = ani.getView();
+        }else {
+            Image image = new Image(new FileInputStream(file));
+            iv2.setImage(image);
+        }
+        iv2.setSmooth(true);
+        iv2.setCache(true);
+        iv2.setFitWidth(IMG_W);
+        iv2.setFitHeight(IMG_H);
+        iv2.setPreserveRatio(true);
+        return iv2;
+    }
+
+    void showImg(BorderPane root, File img) throws IOException{
+        root.setCenter(fileImg(img));
+        String word = word(img);
+        root.setBottom(createBorderedText(word));
+        System.out.println("Expecting speech: "+word);
+    }
+
+    private Node createBorderedText(String txt) {
+        Text text = new Text(txt);
+        text.setFont(new Font(30));
+
+        StackPane sp = new StackPane(text);
+        sp.setStyle("-fx-border-color: red;");
+        return sp ;
+    }
+
+    String word(File img){
+        String n = img.getName();
+        return n.substring(0, n.indexOf('.'));
+    }
+
+    @Override
+    public void start(Stage stage) throws Exception {
+        images = new File(Main.class.getClassLoader().getResource("img").getFile()).listFiles();
+
+        new Thread(){
+            @Override
+            public void run() {
+                try {
+                    new SpeechRecognition(null){
+                        @Override
+                        void onSpeech(String txt) {
+                            if( word(images[imgPos]).equals(txt) ){
+                                Platform.runLater(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        nextImage();
+                                    }
+                                });
+                            }
+                        }
+                    };
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+
+        //final StackPane root = new StackPane(fileImg(images[imgPos]));
+        root = new BorderPane();
+        showImg(root, images[imgPos]);
+        stage.setTitle("AudioCards");
+        Scene scene = new Scene(root, 900, 700);
+        stage.setScene(scene);
+        stage.show();
+
+        scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent keyEvent) {
+                if( keyEvent.getCode()== KeyCode.RIGHT ){
+                    nextImage();
+                }
+            }
+        });
+    }
+
+    void nextImage() {
+        try {
+            imgPos = (imgPos+1) % images.length;
+            //root.getChildren().set(0, fileImg(images[imgPos]));
+            showImg(root, images[imgPos]);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) throws Exception{
-        long t0 = currentTimeMillis();
-        System.out.println("Loading models...");
-
-        Configuration configuration = new Configuration();
-        configuration.setAcousticModelPath(ACOUSTIC_MODEL);
-        configuration.setDictionaryPath(DICTIONARY_PATH);
-        configuration.setGrammarPath(GRAMMAR_PATH);
-        configuration.setUseGrammar(true);
-
-        configuration.setGrammarName("menu");
-
         if( args.length==1 ) {
-            StreamSpeechRecognizer recognizer = new StreamSpeechRecognizer(configuration);
-            System.out.println("tprepare = " + (currentTimeMillis() - t0));
-            t0 = currentTimeMillis();
-            // "/home/denny/Downloads/Record_0003.wav"
-            fileRecognize(recognizer, args[0]);
-            System.out.println("tprocess = " + (currentTimeMillis() - t0));
+            new SpeechRecognition(args[0]);
         }else{
-            LiveSpeechRecognizer lmRecognizer =
-                new LiveSpeechRecognizer(configuration);
-            System.out.println("tprepare = " + (currentTimeMillis() - t0));
-            mikeRecognize(lmRecognizer);
+            launch(args);
         }
     }
 
-    static void mikeRecognize(LiveSpeechRecognizer recognizer) throws Exception{
-        System.out.println("Recognizing from microphone...");
-        // Simple recognition with generic model
-        recognizer.startRecognition(true);
-        SpeechResult result;
-        StringBuilder sb = new StringBuilder();
-        while ((result = recognizer.getResult()) != null) {
-            sb.append(result.getHypothesis()+" ");
-            System.out.format("Hypothesis: %s\n", result.getHypothesis());
 
-            System.out.println("List of recognized words and their times:");
-            for (WordResult r : result.getWords()) {
-                System.out.println(r + " "+r.getConfidence()+ " "+r.getScore());
-            }
-
-            System.out.println("Best 3 hypothesis:");
-            for (String s : result.getNbest(3))
-                System.out.println(s);
-
-        }
-        recognizer.stopRecognition();
-        System.out.println("Result: "+sb);
-    }
-
-    static void fileRecognize(StreamSpeechRecognizer recognizer, String fname) throws Exception{
-        System.out.println("Recognizing file: "+fname);
-        InputStream stream = new FileInputStream(fname);
-
-        // Simple recognition with generic model
-        recognizer.startRecognition(stream);
-        SpeechResult result;
-        StringBuilder sb = new StringBuilder();
-        while ((result = recognizer.getResult()) != null) {
-            sb.append(result.getHypothesis()+" ");
-        }
-        recognizer.stopRecognition();
-        System.out.println("Result: " + sb);
-
-    }
 
 }
