@@ -4,8 +4,9 @@ grammar menu;
 
 public <item> =
     ball | cat | cup | dinosaur | dog | fly | frog | lion | moon | pig |
+    apple | book | muddy puddle | potty | spider | spoon | table |
 
 
-    egg | leg | sun | gun | two | log | table | apple |
+    egg | leg | sun | gun | two | log |
     hog | mat | via | tag | rag | sack | maple | cable | fog | zoo | god | stun | peg | heck
     ;
