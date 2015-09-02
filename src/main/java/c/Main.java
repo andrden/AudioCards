@@ -29,10 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 import static java.lang.System.currentTimeMillis;
 
@@ -56,6 +53,16 @@ public class Main extends Application {
         Node view;
         String word;
         boolean active=true;
+        long inactivateT;
+
+        void inactivate(){
+            active = false;
+            inactivateT = System.currentTimeMillis();
+        }
+        void reactivate(){
+            active = true;
+            inactivateT = 0;
+        }
 
         Cell(Node view, String word) {
             this.view = view;
@@ -111,6 +118,9 @@ public class Main extends Application {
     }
 
     void showImgGroup(final GridPane gridpane){
+       for( Cell c : currentCells ){
+           fadeInOut(c.view, false);
+       }
        gridpane.getChildren().removeAll();
        currentCells.clear();
        new GridScan(){
@@ -154,11 +164,8 @@ public class Main extends Application {
                     new SpeechRecognition(null){
                         @Override
                         void onSpeech(String txt) {
-                                Platform.runLater(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        onSpeechWord(txt);
-                                    }
+                                Platform.runLater(() -> {
+                                    onSpeechWord(txt);
                                 });
                         }
                     };
@@ -185,55 +192,67 @@ public class Main extends Application {
         stage.setScene(scene);
         stage.show();
 
-        scene.setOnKeyTyped(new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent keyEvent) {
-                int pos = keyEvent.getCharacter().charAt(0) - '1';
-                if( pos>=0 && pos<currentCells.size() ){
-                    hit(pos);
-                }
+        scene.setOnKeyTyped( (KeyEvent keyEvent) -> {
+            int pos = keyEvent.getCharacter().charAt(0) - '1';
+            if( pos>=0 && pos<currentCells.size() ){
+                hit(pos);
             }
         });
 
-//        scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
-//            @Override
-//            public void handle(KeyEvent keyEvent) {
-//                int idx = new KeyCode{KeyCode.Di}
-//                if( keyEvent.getCode()== KeyCode.RIGHT ){
-//
-//                    FadeTransition ft = new FadeTransition(Duration.millis(700), root.getChildren().get(0));
-//                    ft.setFromValue(1.0);
-//                    ft.setToValue(0);
-//                    ft.play();
-//
-//                    nextImage();
-//                }
-//            }
-//        });
-        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-            @Override
-            public void handle(WindowEvent windowEvent) {
-                System.exit(0);
+        scene.setOnKeyPressed((KeyEvent keyEvent) -> {
+            if( keyEvent.getCode() == KeyCode.BACK_SPACE /* KeyCode.RIGHT */ ){
+                goBack();
             }
+        });
+        stage.setOnCloseRequest(windowEvent -> {
+            System.exit(0);
         });
     }
 
     void onSpeechWord(String txt) {
-        for( int i=0; i<currentCells.size(); i++ ){
-            if( currentCells.get(i).word.equals(txt) ){
-                hit(i);
+        if( "back".equals(txt) ){
+            goBack();
+        }else {
+            for (int i = 0; i < currentCells.size(); i++) {
+                if (currentCells.get(i).word.equals(txt)) {
+                    hit(i);
+                }
             }
         }
+    }
+
+    void goBack(){
+        if( currentCells.stream().allMatch( c -> c.active) ){
+            if( imgPos >= GRID_H * GRID_W ) {
+                imgPos -= GRID_H * GRID_W;
+                showImgGroup(root);
+//                Platform.runLater(this::nextImgGroup);
+
+            }
+        }else{
+            Cell c = currentCells.stream().max((o1, o2) -> new Long(o1.inactivateT).compareTo(o2.inactivateT)).get();
+            c.reactivate();
+            fadeInOut(c.view, true);
+        }
+    }
+
+    void fadeInOut(Node node, boolean in){
+        FadeTransition ft = new FadeTransition(Duration.millis(500), node);
+        if( in ){
+            ft.setFromValue(0);
+            ft.setToValue(1.0);
+        }else {
+            ft.setFromValue(1.0);
+            ft.setToValue(0);
+        }
+        ft.play();
     }
 
     void hit(int cell){
         Cell c = currentCells.get(cell);
         if( c.active ) {
-            FadeTransition ft = new FadeTransition(Duration.millis(500), c.view);
-            ft.setFromValue(1.0);
-            ft.setToValue(0);
-            ft.play();
-            c.active = false;
+            fadeInOut(c.view, false);
+            c.inactivate();
         }
 
         if( ! anyActive() ){
