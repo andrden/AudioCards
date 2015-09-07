@@ -130,7 +130,7 @@ public class UI {
             void cell(int i, int j, File img) throws Exception{
                 BorderPane bp = new BorderPane();
                 bp.setCenter(fileImg(img));
-                String word = word(img);
+                String word = Model.word(img);
                 bp.setBottom(createBorderedText(word));
                 System.out.println("Expecting speech: " + word);
                 gridpane.add(bp, i+1, j+1);
@@ -148,11 +148,6 @@ public class UI {
         StackPane sp = new StackPane(text);
         //sp.setStyle("-fx-border-color: red;");
         return sp ;
-    }
-
-    String word(File img){
-        String n = img.getName();
-        return n.substring(0, n.indexOf('.'));
     }
 
     void goBack(){

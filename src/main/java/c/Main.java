@@ -14,13 +14,16 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by denny on 8/6/15.
@@ -34,6 +37,8 @@ public class Main extends Application {
                 .filter(p -> p.toFile().isFile())
                 .map(p -> p.toFile())
                 .toArray(File[]::new);
+
+        makeMenuGram(Arrays.<File>asList(images).stream().map( f -> Model.word(f)).toArray(String[]::new) );
 
         //File[] images = new File(Main.class.getClassLoader().getResource("img").getFile()).listFiles();
 
@@ -60,6 +65,12 @@ public class Main extends Application {
 
     }
 
+    static void makeMenuGram(String[] words) throws IOException{
+        String tpl = IOUtils.toString(Thread.currentThread().getContextClassLoader().getResourceAsStream("gramm/menu.gram"));
+        String repl = Arrays.<String>asList(words).stream().collect(Collectors.joining(" | ","", " | "));
+        String gram = tpl.replace("[[INSERT_HERE]]", repl);
+        Files.write(new File("/tmp/audiocardsmenu.gram").toPath(), gram.getBytes());
+    }
 
 
     public static void main(String[] args) throws Exception{

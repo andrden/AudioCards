@@ -19,8 +19,9 @@ public class SpeechRecognition {
             "resource:/edu/cmu/sphinx/models/en-us/en-us";
     private static final String DICTIONARY_PATH =
             "resource:/edu/cmu/sphinx/models/en-us/cmudict-en-us.dict";
-    private static final String GRAMMAR_PATH =
-            "resource:/gramm/";
+//    private static final String GRAMMAR_PATH =
+//            "resource:/gramm/";
+    private static final String GRAMMAR_PATH = "/tmp/";
 
     public SpeechRecognition(String file) throws Exception{
         long t0 = currentTimeMillis();
@@ -30,7 +31,7 @@ public class SpeechRecognition {
         configuration.setGrammarPath(GRAMMAR_PATH);
         configuration.setUseGrammar(true);
 
-        configuration.setGrammarName("menu");
+        configuration.setGrammarName("audiocardsmenu");
 
         System.out.println("Loading models...");
 
