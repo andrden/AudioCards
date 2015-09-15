@@ -33,11 +33,11 @@ public class UI {
     final int GRID_H=2;
 
     int imgPos=0;
-    File[] images;
+    List<File> images;
     List<Cell> currentCells = new ArrayList<Cell>();
     final GridPane root = new GridPane();
 
-    public UI(File[] images, Stage stage) {
+    public UI(List<File> images, Stage stage) {
         this.images = images;
 
 
@@ -102,7 +102,7 @@ public class UI {
         GridScan() {
             for( int i=0; i<GRID_W; i++){
                 for( int j=0; j<GRID_H; j++ ){
-                    File img = images[(imgPos+i+j*GRID_W)%images.length];
+                    File img = images.get((imgPos+i+j*GRID_W)%images.size());
                     try {
                         cell(i,j,img);
                     } catch (Exception e) {

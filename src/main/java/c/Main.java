@@ -33,16 +33,24 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        File[] images = Files.walk(new File(Main.class.getClassLoader().getResource("img").getFile()).toPath())
-                .filter(p -> p.toFile().isFile())
-                .map(p -> p.toFile())
-                .toArray(File[]::new);
+        File imgDir = new File(Main.class.getClassLoader().getResource("img").getFile());
+        List<File> subDirs = Arrays.<File>asList(imgDir.listFiles());
+        Collections.shuffle(subDirs);
+        List<File> allImgList = new ArrayList<>();
+        for( File dir : subDirs ){
+            File[] oneDir = dir.listFiles();
+            allImgList.addAll(Arrays.<File>asList(oneDir));
+        }
+        System.out.println("Total images: "+allImgList.size());
 
-        makeMenuGram(Arrays.<File>asList(images).stream().map( f -> Model.word(f)).toArray(String[]::new) );
 
-        //File[] images = new File(Main.class.getClassLoader().getResource("img").getFile()).listFiles();
+//        File[] images = Files.walk(imgDir.toPath())
+//                .filter(p -> p.toFile().isFile())
+//                .map(p -> p.toFile())
+//                .toArray(File[]::new);
 
-        ui = new UI(images, stage);
+        makeMenuGram(allImgList.stream().map( f -> Model.word(f)).toArray(String[]::new) );
+        ui = new UI(allImgList, stage);
 
         new Thread(){
             @Override
